@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marwan Mostafa Refaat — Backend Engineer</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%230a0b0d'/%3E%3Cpath d='M50 30 L58 42 L72 38 L64 50 L78 56 L62 58 L68 72 L54 62 L50 76 L46 62 L32 72 L38 58 L22 56 L36 50 L28 38 L42 42 Z' fill='%23d9a441'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #060708;
+    --bg-alt: #0c0e11;
+    --panel: #101216;
+    --line: #23272f;
+    --line-soft: #17191e;
+    --text: #e9e7e2;
+    --text-dim: #8b93a1;
+    --text-faint: #4c525e;
+    --signal: #d9a441;
+    --signal-soft: rgba(217,164,65,0.13);
+    --signal-line: rgba(217,164,65,0.4);
+    --cut: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+    --maxw: 920px;
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+
+  body{
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* faint grain texture */
+  body::before{
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0.035;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* searchlight that tracks the cursor */
+  #signal{
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    background: radial-gradient(480px circle at var(--sx,50%) var(--sy,20%), var(--signal-soft), transparent 65%);
+    transition: opacity .4s ease;
+  }
+
+  /* fixed haze cast down from the top, like a signal against low cloud */
+  #haze{
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 60vh;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(60% 55% at 74% 0%, rgba(217,164,65,0.10), transparent 70%);
+    opacity: 0;
+    animation: haze-in 2.4s ease-out .3s forwards;
+  }
+  @keyframes haze-in{ to{ opacity: 1; } }
+
+  /* one-time sweep across the hero on load */
+  #sweep{
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    background: linear-gradient(100deg, transparent 40%, rgba(233,231,226,0.06) 48%, transparent 56%);
+    transform: translateX(-30%);
+    animation: sweep 1.8s cubic-bezier(.4,0,.2,1) .15s 1;
+  }
+  @keyframes sweep{
+    0%{ transform: translateX(-40%); opacity: 0; }
+    12%{ opacity: 1; }
+    100%{ transform: translateX(40%); opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    #signal{ display:none; }
+    #haze{ opacity: 1; animation: none; }
+    #sweep{ display: none; }
+    html{ scroll-behavior: auto; }
+  }
+
+  .wrap{
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 0 28px;
+    position: relative;
+    z-index: 3;
+  }
+
+  a{ color: inherit; }
+
+  /* ---------- nav ---------- */
+  nav{
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(10px);
+    background: rgba(10,11,13,0.75);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  nav .wrap{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 18px;
+    padding-bottom: 18px;
+  }
+  .mark{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--signal);
+    letter-spacing: 0.02em;
+    text-decoration: none;
+  }
+  .navlinks{
+    display: flex;
+    gap: 28px;
+    list-style: none;
+    margin: 0; padding: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+  .navlinks a{
+    text-decoration: none;
+    color: var(--text-dim);
+    border-bottom: 1px solid transparent;
+    padding-bottom: 3px;
+    transition: color .2s ease, border-color .2s ease;
+  }
+  .navlinks a:hover, .navlinks a:focus-visible{
+    color: var(--signal);
+    border-color: var(--signal-line);
+  }
+
+  /* ---------- hero ---------- */
+  header.hero{
+    padding: 110px 0 0;
+    border-bottom: 1px solid var(--line-soft);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-inner{ position: relative; padding-bottom: 90px; }
+
+  .emblem{
+    position: absolute;
+    top: -40px;
+    right: -60px;
+    width: 420px;
+    height: 420px;
+    opacity: 0.05;
+    z-index: 0;
+    pointer-events: none;
+  }
+  @media (max-width: 720px){ .emblem{ width: 280px; height: 280px; right: -80px; } }
+
+  .skyline{
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 90px;
+    z-index: 0;
+    opacity: 0.9;
+    pointer-events: none;
+  }
+  .kicker{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text-faint);
+    margin: 0 0 22px;
+    position: relative;
+    z-index: 1;
+  }
+  .kicker span{ color: var(--signal); }
+
+  h1.name{
+    font-size: clamp(2.6rem, 6vw, 4.2rem);
+    line-height: 1.04;
+    margin: 0 0 18px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    max-width: 11ch;
+    position: relative;
+    z-index: 1;
+  }
+
+  .role{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    color: var(--signal);
+    margin: 0 0 26px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .lede{
+    color: var(--text-dim);
+    font-size: 17px;
+    max-width: 58ch;
+    margin: 0 0 40px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cta-row{ display: flex; gap: 14px; flex-wrap: wrap; position: relative; z-index: 1; }
+
+  .btn{
+    display: inline-block;
+    padding: 12px 22px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13.5px;
+    text-decoration: none;
+    clip-path: var(--cut);
+    transition: transform .15s ease, border-color .2s ease, background .2s ease;
+  }
+  .btn-solid{
+    background: var(--signal);
+    color: #0a0b0d;
+    font-weight: 600;
+  }
+  .btn-solid:hover, .btn-solid:focus-visible{ transform: translateY(-1px); }
+  .btn-line{
+    border: 1px solid var(--line);
+    color: var(--text);
+  }
+  .btn-line:hover, .btn-line:focus-visible{
+    border-color: var(--signal-line);
+    color: var(--signal);
+  }
+  .btn:focus-visible{ outline: 2px solid var(--signal); outline-offset: 3px; }
+
+  /* ---------- section shared ---------- */
+  section{ padding: 84px 0; border-bottom: 1px solid var(--line-soft); }
+  section:last-of-type{ border-bottom: none; }
+
+  .section-head{
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 44px;
+  }
+  .section-head h2{
+    font-size: 1.5rem;
+    margin: 0;
+    font-weight: 600;
+  }
+  .section-head .idx{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text-faint);
+  }
+
+  /* ---------- about ---------- */
+  .about-grid{
+    display: grid;
+    grid-template-columns: 1fr 1.3fr;
+    gap: 48px;
+  }
+  .about-grid p{
+    color: var(--text-dim);
+    font-size: 16px;
+    margin: 0 0 16px;
+  }
+  .about-stats{
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    border-left: 1px solid var(--line);
+    padding-left: 24px;
+  }
+  .stat b{
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--signal);
+    font-size: 22px;
+  }
+  .stat span{
+    color: var(--text-faint);
+    font-size: 13px;
+  }
+
+  @media (max-width: 720px){
+    .about-grid{ grid-template-columns: 1fr; }
+  }
+
+  /* ---------- skills ---------- */
+  .skill-panel{
+    border: 1px solid var(--line);
+    background: var(--panel);
+    clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+  }
+  .skill-row{
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 24px;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .skill-row:last-child{ border-bottom: none; }
+  .skill-label{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: var(--text-faint);
+    padding-top: 2px;
+  }
+  .skill-items{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    font-size: 14.5px;
+    color: var(--text);
+  }
+  .skill-items span::after{ content: "·"; color: var(--text-faint); margin-left: 10px; }
+  .skill-items span:last-child::after{ content: ""; }
+
+  @media (max-width: 640px){
+    .skill-row{ grid-template-columns: 1fr; gap: 8px; }
+  }
+
+  /* ---------- projects ---------- */
+  .project{
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 32px 0;
+    border-top: 1px solid var(--line-soft);
+  }
+  .project:first-child{ border-top: none; padding-top: 0; }
+
+  .project-head{
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .project-head h3{
+    font-size: 1.25rem;
+    margin: 0;
+    font-weight: 600;
+  }
+  .project-link{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--signal);
+    text-decoration: none;
+    border-bottom: 1px solid var(--signal-line);
+    white-space: nowrap;
+  }
+  .project-link:hover, .project-link:focus-visible{ color: #f0c274; }
+
+  .project p{
+    color: var(--text-dim);
+    font-size: 15.5px;
+    max-width: 66ch;
+    margin: 0;
+  }
+
+  .tag-row{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .tag{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    border: 1px solid var(--line);
+    padding: 4px 10px;
+    clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  }
+  .project.featured .tag{
+    border-color: var(--signal-line);
+    color: var(--signal);
+  }
+  .project.featured{
+    background: linear-gradient(180deg, rgba(217,164,65,0.06), transparent 60%);
+    border: 1px solid var(--signal-line);
+    clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+    padding: 32px 24px;
+    margin: 0 0 8px;
+    border-top: 1px solid var(--signal-line);
+  }
+
+  /* ---------- contact ---------- */
+  .contact-box{
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 32px;
+  }
+  .contact-box h2{
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    margin: 0 0 12px;
+    max-width: 14ch;
+    font-weight: 700;
+  }
+  .contact-box p{ color: var(--text-dim); margin: 0; max-width: 44ch; }
+  .contact-links{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14.5px;
+  }
+  .contact-links a{
+    text-decoration: none;
+    color: var(--text);
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 2px;
+    transition: color .2s ease, border-color .2s ease;
+  }
+  .contact-links a:hover, .contact-links a:focus-visible{
+    color: var(--signal);
+    border-color: var(--signal-line);
+  }
+
+  footer{
+    padding: 30px 0 50px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-faint);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div id="signal"></div>
+<div id="haze"></div>
+
+<nav>
+  <div class="wrap">
+    <a class="mark" href="#top">MMR / gotham-node</a>
+    <ul class="navlinks">
+      <li><a href="#about">about</a></li>
+      <li><a href="#skills">skills</a></li>
+      <li><a href="#work">work</a></li>
+      <li><a href="#contact">contact</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero" id="top">
+    <div id="sweep"></div>
+
+    <svg class="emblem" viewBox="0 0 200 200" aria-hidden="true">
+      <path fill="#d9a441" d="M100 20 L118 62 L162 46 L134 84 L178 100 L134 116 L162 154 L118 138 L100 180 L82 138 L38 154 L66 116 L22 100 L66 84 L38 46 L82 62 Z"/>
+    </svg>
+
+    <svg class="skyline" viewBox="0 0 920 90" preserveAspectRatio="none" aria-hidden="true">
+      <rect x="0" y="40" width="30" height="50" fill="#0c0e11"/>
+      <rect x="34" y="20" width="22" height="70" fill="#0c0e11"/>
+      <rect x="60" y="50" width="40" height="40" fill="#0c0e11"/>
+      <rect x="104" y="10" width="18" height="80" fill="#0c0e11"/>
+      <rect x="126" y="34" width="28" height="56" fill="#0c0e11"/>
+      <rect x="700" y="46" width="34" height="44" fill="#0c0e11"/>
+      <rect x="738" y="24" width="20" height="66" fill="#0c0e11"/>
+      <rect x="762" y="54" width="42" height="36" fill="#0c0e11"/>
+      <rect x="808" y="14" width="16" height="76" fill="#0c0e11"/>
+      <rect x="828" y="38" width="30" height="52" fill="#0c0e11"/>
+      <rect x="862" y="58" width="58" height="32" fill="#0c0e11"/>
+    </svg>
+
+    <div class="hero-inner">
+      <p class="kicker">Computer science student · <span>Assiut, Egypt</span></p>
+      <h1 class="name">Marwan Mostafa Refaat</h1>
+      <p class="role">Backend Engineer — Node.js / Express</p>
+      <p class="lede">
+        I build the parts of a product nobody sees but everyone depends on —
+        authentication that holds up, data that stays consistent, and APIs
+        that fail loudly instead of quietly. Currently shipping backend
+        systems in Node.js, MongoDB, and Redis.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-solid" href="#work">See the work</a>
+        <a class="btn btn-line" href="#contact">Get in touch</a>
+      </div>
+    </div>
+  </header>
+
+  <section id="about">
+    <div class="section-head">
+      <span class="idx">about</span>
+      <h2>Where the interest actually is</h2>
+    </div>
+    <div class="about-grid">
+      <div>
+        <p>
+          I'm a backend-focused Computer Science student who cares more about
+          what happens after the request hits the server than what happens
+          before it. Schema design, auth that can be revoked, validation
+          that fails safely, error handling that doesn't leak — that's the
+          work I keep coming back to.
+        </p>
+        <p>
+          Most of what I've built started as a way to learn something
+          specific — refresh token rotation, rate limiting, caching — and
+          turned into a full working system by the time I was done.
+        </p>
+      </div>
+      <div class="about-stats">
+        <div class="stat">
+          <b>3+</b>
+          <span>backend APIs built end to end, from schema to deployment</span>
+        </div>
+        <div class="stat">
+          <b>JWT / Redis / MongoDB</b>
+          <span>core stack for auth, caching, and persistence</span>
+        </div>
+        <div class="stat">
+          <b>Node.js + Express</b>
+          <span>primary runtime, with a NestJS-consistent structure</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="skills">
+    <div class="section-head">
+      <span class="idx">stack</span>
+      <h2>What I build with</h2>
+    </div>
+    <div class="skill-panel">
+      <div class="skill-row">
+        <div class="skill-label">languages / runtime</div>
+        <div class="skill-items"><span>JavaScript</span><span>Node.js</span><span>C++</span><span>Python</span></div>
+      </div>
+      <div class="skill-row">
+        <div class="skill-label">backend / APIs</div>
+        <div class="skill-items"><span>Express.js</span><span>REST API design</span><span>Middleware architecture</span><span>Zod validation</span></div>
+      </div>
+      <div class="skill-row">
+        <div class="skill-label">auth / security</div>
+        <div class="skill-items"><span>JWT access &amp; refresh tokens</span><span>bcrypt</span><span>Role-based access control</span></div>
+      </div>
+      <div class="skill-row">
+        <div class="skill-label">data / persistence</div>
+        <div class="skill-items"><span>MongoDB / Mongoose</span><span>MySQL</span><span>Redis (Upstash)</span></div>
+      </div>
+      <div class="skill-row">
+        <div class="skill-label">tools</div>
+        <div class="skill-items"><span>Git</span><span>GitHub</span><span>Docker</span><span>Postman</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="work">
+    <div class="section-head">
+      <span class="idx">work</span>
+      <h2>Selected projects</h2>
+    </div>
+
+    <div class="project featured">
+      <div class="project-head">
+        <h3>Saraha — Anonymous Messaging Platform</h3>
+        <a class="project-link" href="https://github.com/marwannkhalifa27-debug/Saraha" target="_blank" rel="noopener">github.com/marwannkhalifa27-debug/Saraha</a>
+      </div>
+      <p>
+        A full-stack anonymous messaging API — anyone with a user's link can send
+        them a message with no account required. Built around JWT access/refresh
+        authentication with server-side token revocation, centralized Zod
+        validation, and Redis-backed rate limiting and caching to keep the one
+        public, unauthenticated endpoint safe from abuse.
+      </p>
+      <div class="tag-row">
+        <span class="tag">Node.js</span>
+        <span class="tag">Express</span>
+        <span class="tag">MongoDB</span>
+        <span class="tag">JWT</span>
+        <span class="tag">Zod</span>
+        <span class="tag">Redis / Upstash</span>
+        <span class="tag">Multer</span>
+      </div>
+    </div>
+
+    <div class="project">
+      <div class="project-head">
+        <h3>URL Shortener API</h3>
+      </div>
+      <p>
+        A RESTful link-shortening service with signup/login, hashed passwords,
+        and JWT-based session management. Generates unique short codes and
+        handles redirects, with protected routes so only the owner can manage
+        their links.
+      </p>
+      <div class="tag-row">
+        <span class="tag">Node.js</span>
+        <span class="tag">Express</span>
+        <span class="tag">JWT</span>
+        <span class="tag">bcrypt</span>
+      </div>
+    </div>
+
+    <div class="project">
+      <div class="project-head">
+        <h3>Notes REST API</h3>
+      </div>
+      <p>
+        A secure Notes API with full CRUD for note management, JWT-protected
+        endpoints, structured error handling, and lightweight JSON persistence
+        via lowdb — built to learn middleware design from the ground up.
+      </p>
+      <div class="tag-row">
+        <span class="tag">Node.js</span>
+        <span class="tag">Express</span>
+        <span class="tag">JWT</span>
+        <span class="tag">lowdb</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="contact-box">
+      <div>
+        <h2>Let's build something that holds up.</h2>
+        <p>Open to backend internships, freelance work, and teams who care about getting the server-side right.</p>
+      </div>
+      <div class="contact-links">
+        <a href="mailto:marwannkhalifa.27@gmail.com">marwannkhalifa.27@gmail.com</a>
+        <a href="https://github.com/marwannkhalifa27-debug" target="_blank" rel="noopener">github.com/marwannkhalifa27-debug</a>
+        <a href="#top">Assiut, Egypt</a>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="wrap" style="display:flex; justify-content:space-between; width:100%; flex-wrap:wrap; gap:8px;">
+    <span>© 2026 Marwan Mostafa Refaat</span>
+    <span>Built with Node.js on the mind</span>
+  </div>
+</footer>
+
+<script>
+  (function(){
+    var el = document.getElementById('signal');
+    if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var raf = null;
+    window.addEventListener('mousemove', function(e){
+      if (raf) return;
+      raf = requestAnimationFrame(function(){
+        el.style.setProperty('--sx', e.clientX + 'px');
+        el.style.setProperty('--sy', e.clientY + 'px');
+        raf = null;
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>
